@@ -5,3 +5,6 @@ dist/
 .yarn/build-state.yml
 .yarn/install-state.gz
 *.log
+.env
+.env.*
+!.env.example
