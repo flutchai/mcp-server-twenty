@@ -7,7 +7,7 @@ import {
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
 import { TwentyClient } from "./twenty-client.js";
-import { buildPeopleTools } from "./tools/index.js";
+import { buildPeopleTools, buildCompanyTools } from "./tools/index.js";
 import type { ToolDefinition } from "./types.js";
 
 class TwentyMcpServer {
@@ -60,7 +60,10 @@ class TwentyMcpServer {
           );
         }
 
-        throw new McpError(ErrorCode.InternalError, `Twenty API error: ${error.message}`);
+        throw new McpError(
+          ErrorCode.InternalError,
+          `Twenty API error: ${error.message}`,
+        );
       }
     });
   }
@@ -69,16 +72,24 @@ class TwentyMcpServer {
     const { apiKey, baseUrl } = TwentyClient.resolveCredentials();
     this.client = new TwentyClient(apiKey, baseUrl);
 
-    // Build tools — introspects Person schema to discover custom fields
-    this.tools = await buildPeopleTools(this.client);
+    // Build tools — introspects Person and Company schemas to discover custom fields
+    const [peopleTools, companyTools] = await Promise.all([
+      buildPeopleTools(this.client),
+      buildCompanyTools(this.client),
+    ]);
+    this.tools = [...peopleTools, ...companyTools];
     this.toolMap = new Map(this.tools.map((t) => [t.name, t]));
 
     this.setupHandlers();
 
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
+    const personCustom =
+      this.client["personSchema"]?.customFieldNames?.length ?? 0;
+    const companyCustom =
+      this.client["companySchema"]?.customFieldNames?.length ?? 0;
     console.error(
-      `Twenty MCP Server running (${this.tools.length} tools, ${this.client["personSchema"]?.customFieldNames?.length ?? 0} custom fields)`,
+      `Twenty MCP Server running (${this.tools.length} tools, person custom fields: ${personCustom}, company custom fields: ${companyCustom})`,
     );
   }
 }
