@@ -7,7 +7,10 @@ export interface ToolDefinition {
     required?: string[];
     additionalProperties?: boolean;
   };
-  handler: (client: TwentyGraphQLClient, args: Record<string, any>) => Promise<string>;
+  handler: (
+    client: TwentyGraphQLClient,
+    args: Record<string, any>,
+  ) => Promise<string>;
 }
 
 export interface TwentyGraphQLClient {

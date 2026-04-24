@@ -7,7 +7,7 @@ import {
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
 import { TwentyClient } from "./twenty-client.js";
-import { buildPeopleTools, buildCompanyTools } from "./tools/index.js";
+import { buildPeopleTools, buildCompanyTools, buildNotesTools } from "./tools/index.js";
 import type { ToolDefinition } from "./types.js";
 
 class TwentyMcpServer {
@@ -73,11 +73,12 @@ class TwentyMcpServer {
     this.client = new TwentyClient(apiKey, baseUrl);
 
     // Build tools — introspects Person and Company schemas to discover custom fields
-    const [peopleTools, companyTools] = await Promise.all([
+    const [peopleTools, companyTools, notesTools] = await Promise.all([
       buildPeopleTools(this.client),
       buildCompanyTools(this.client),
+      buildNotesTools(this.client),
     ]);
-    this.tools = [...peopleTools, ...companyTools];
+    this.tools = [...peopleTools, ...companyTools, ...notesTools];
     this.toolMap = new Map(this.tools.map((t) => [t.name, t]));
 
     this.setupHandlers();
