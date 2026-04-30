@@ -51,7 +51,11 @@ function buildPersonInput(
 
     // Try camelCase mapping
     for (const [camelCase, lowercase] of Object.entries(CUSTOM_FIELD_MAPPING)) {
-      if (lowercase === field && args[camelCase] != null && args[camelCase] !== "") {
+      if (
+        lowercase === field &&
+        args[camelCase] != null &&
+        args[camelCase] !== ""
+      ) {
         input[field] = args[camelCase];
         break;
       }
@@ -79,8 +83,14 @@ const STANDARD_INPUT_PROPERTIES = {
   linkedinUrl: { type: "string", description: "LinkedIn profile URL" },
   xUrl: { type: "string", description: "X/Twitter profile URL" },
   companyId: { type: "string", description: "Company ID to associate with" },
-  telegramUsername: { type: "string", description: "Telegram username (without @)" },
-  instagramUsername: { type: "string", description: "Instagram username (without @)" },
+  telegramUsername: {
+    type: "string",
+    description: "Telegram username (without @)",
+  },
+  instagramUsername: {
+    type: "string",
+    description: "Instagram username (without @)",
+  },
   whatsappPhone: { type: "string", description: "WhatsApp phone number" },
 };
 
@@ -225,21 +235,50 @@ export async function buildPeopleTools(
         // Try to find by multiple fields in priority order
         // Use lowercase field names as they appear in TwentyCRM schema
         const searchFields = [
-          { field: 'telegramUsername', filter: args.telegramUsername ? { telegramusername: { eq: args.telegramUsername } } : null },
-          { field: 'instagramUsername', filter: args.instagramUsername ? { instagramusername: { eq: args.instagramUsername } } : null },
-          { field: 'whatsappPhone', filter: args.whatsappPhone ? { whatsappphone: { eq: args.whatsappPhone } } : null },
-          { field: 'email', filter: args.email ? { emails: { primaryEmail: { eq: args.email } } } : null },
-          { field: 'phone', filter: args.phone ? { phones: { primaryPhoneNumber: { like: `%${args.phone}%` } } } : null },
+          {
+            field: "telegramUsername",
+            filter: args.telegramUsername
+              ? { telegramusername: { eq: args.telegramUsername } }
+              : null,
+          },
+          {
+            field: "instagramUsername",
+            filter: args.instagramUsername
+              ? { instagramusername: { eq: args.instagramUsername } }
+              : null,
+          },
+          {
+            field: "whatsappPhone",
+            filter: args.whatsappPhone
+              ? { whatsappphone: { eq: args.whatsappPhone } }
+              : null,
+          },
+          {
+            field: "email",
+            filter: args.email
+              ? { emails: { primaryEmail: { eq: args.email } } }
+              : null,
+          },
+          {
+            field: "phone",
+            filter: args.phone
+              ? { phones: { primaryPhoneNumber: { like: `%${args.phone}%` } } }
+              : null,
+          },
         ];
 
         let existing = null;
         let foundBy = null;
 
-        console.error(`[upsert_person] Starting search with ${searchFields.length} fields`);
+        console.error(
+          `[upsert_person] Starting search with ${searchFields.length} fields`,
+        );
 
         for (const { field, filter } of searchFields) {
           if (!filter) {
-            console.error(`[upsert_person] Skipping ${field} - no value provided`);
+            console.error(
+              `[upsert_person] Skipping ${field} - no value provided`,
+            );
             continue;
           }
 
@@ -258,20 +297,28 @@ export async function buildPeopleTools(
             existing = findData.people?.edges?.[0]?.node;
             if (existing) {
               foundBy = field;
-              console.error(`[upsert_person] Found existing person id=${existing.id} by ${field}`);
+              console.error(
+                `[upsert_person] Found existing person id=${existing.id} by ${field}`,
+              );
               break;
             } else {
-              console.error(`[upsert_person] No results found by ${field}, continuing...`);
+              console.error(
+                `[upsert_person] No results found by ${field}, continuing...`,
+              );
             }
           } catch (err) {
             // Field might not exist in schema, continue to next
-            console.error(`[upsert_person] Search by ${field} failed:`, err instanceof Error ? err.message : err);
+            console.error(
+              `[upsert_person] Search by ${field} failed:`,
+              err instanceof Error ? err.message : err,
+            );
             console.error(`[upsert_person] Continuing to next field...`);
           }
         }
 
-        console.error(`[upsert_person] Search completed. Found: ${!!existing}, foundBy: ${foundBy}`);
-
+        console.error(
+          `[upsert_person] Search completed. Found: ${!!existing}, foundBy: ${foundBy}`,
+        );
 
         if (existing) {
           // Found — update with any new fields
@@ -281,14 +328,21 @@ export async function buildPeopleTools(
           // Only update fields that are missing or empty in existing contact
           for (const [key, value] of Object.entries(updateInput)) {
             const existingValue = existing[key];
-            if (!existingValue || existingValue === '' ||
-                (typeof existingValue === 'object' && Object.keys(existingValue).length === 0)) {
+            if (
+              !existingValue ||
+              existingValue === "" ||
+              (typeof existingValue === "object" &&
+                Object.keys(existingValue).length === 0)
+            ) {
               fieldsToUpdate[key] = value;
             }
           }
 
           if (Object.keys(fieldsToUpdate).length > 0) {
-            console.error(`[upsert_person] Updating person id=${existing.id} with fields:`, Object.keys(fieldsToUpdate));
+            console.error(
+              `[upsert_person] Updating person id=${existing.id} with fields:`,
+              Object.keys(fieldsToUpdate),
+            );
 
             const updateData = await client.mutate(
               `mutation UpdatePerson($id: UUID!, $input: PersonUpdateInput!) {
@@ -301,12 +355,19 @@ export async function buildPeopleTools(
 
             const updated = updateData.updatePerson;
             return JSON.stringify(
-              { action: "updated", person: updated, foundBy, updatedFields: Object.keys(fieldsToUpdate) },
+              {
+                action: "updated",
+                person: updated,
+                foundBy,
+                updatedFields: Object.keys(fieldsToUpdate),
+              },
               null,
               2,
             );
           } else {
-            console.error(`[upsert_person] No fields to update for person id=${existing.id}`);
+            console.error(
+              `[upsert_person] No fields to update for person id=${existing.id}`,
+            );
             return JSON.stringify(
               { action: "found", person: existing, foundBy },
               null,

@@ -190,7 +190,8 @@ export async function buildNotesTools(
         const { id, ...updates } = args;
         const input: Record<string, any> = {};
         if (updates.title !== undefined) input.title = updates.title;
-        if (updates.body !== undefined) input.bodyV2 = { markdown: updates.body }; // Use bodyV2 with markdown object
+        if (updates.body !== undefined)
+          input.bodyV2 = { markdown: updates.body }; // Use bodyV2 with markdown object
 
         const data = await client.mutate(
           `mutation UpdateNote($id: UUID!, $input: NoteUpdateInput!) {
@@ -251,8 +252,7 @@ export async function buildNotesTools(
           },
           title: {
             type: "string",
-            description:
-              "Note title (e.g. 'Contact Notes', 'Qualification')",
+            description: "Note title (e.g. 'Contact Notes', 'Qualification')",
           },
           body: {
             type: "string",

@@ -7,7 +7,11 @@ import {
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
 import { TwentyClient } from "./twenty-client.js";
-import { buildPeopleTools, buildCompanyTools, buildNotesTools } from "./tools/index.js";
+import {
+  buildPeopleTools,
+  buildCompanyTools,
+  buildNotesTools,
+} from "./tools/index.js";
 import type { ToolDefinition } from "./types.js";
 
 class TwentyMcpServer {
